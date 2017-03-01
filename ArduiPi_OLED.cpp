@@ -151,16 +151,16 @@ inline boolean ArduiPi_OLED::isI2C(void) {
 }
 // Low level I2C and SPI Write function
 inline void ArduiPi_OLED::fastSPIwrite(uint8_t d) {
-  bcm2835_spi_transfer(d);
+  bcm2835v2_spi_transfer(d);
 }
 inline void ArduiPi_OLED::fastI2Cwrite(uint8_t d) {
-  bcm2835_spi_transfer(d);
+  bcm2835v2_spi_transfer(d);
 }
 inline void ArduiPi_OLED::fastSPIwrite(char* tbuf, uint32_t len) {
-  bcm2835_spi_writenb(tbuf, len);
+  bcm2835v2_spi_writenb(tbuf, len);
 }
 inline void ArduiPi_OLED::fastI2Cwrite(char* tbuf, uint32_t len) {
-  bcm2835_i2c_write(tbuf, len);
+  bcm2835v2_i2c_write(tbuf, len);
 }
 
 // the most basic function, set a single pixel
@@ -338,7 +338,7 @@ boolean ArduiPi_OLED::select_oled(uint8_t OLED_TYPE)
     return false;
 
   // Init Raspberry PI GPIO
-  if (!bcm2835_init())
+  if (!bcm2835v2_init())
     return false;
     
   return true;
@@ -358,18 +358,18 @@ boolean ArduiPi_OLED::init(int8_t DC, int8_t RST, int8_t CS, uint8_t OLED_TYPE)
     return false;
 
   // Init & Configure Raspberry PI SPI
-  bcm2835_spi_begin(cs);
-  bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);      
-  bcm2835_spi_setDataMode(BCM2835_SPI_MODE0);                
+  bcm2835v2_spi_begin(cs);
+  bcm2835v2_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);      
+  bcm2835v2_spi_setDataMode(BCM2835_SPI_MODE0);                
   
   // 16 MHz SPI bus, but Worked at 62 MHz also  
-  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_16); 
+  bcm2835v2_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_16); 
 
   // Set the pin that will control DC as output
-  bcm2835_gpio_fsel(dc, BCM2835_GPIO_FSEL_OUTP);
+  bcm2835v2_gpio_fsel(dc, BCM2835_GPIO_FSEL_OUTP);
 
   // Setup reset pin direction as output
-  bcm2835_gpio_fsel(rst, BCM2835_GPIO_FSEL_OUTP);
+  bcm2835v2_gpio_fsel(rst, BCM2835_GPIO_FSEL_OUTP);
 
   return ( true);
 }
@@ -385,17 +385,17 @@ boolean ArduiPi_OLED::init(int8_t RST, uint8_t OLED_TYPE)
     return false;
 
   // Init & Configure Raspberry PI I2C
-  if (bcm2835_i2c_begin()==0)
+  if (bcm2835v2_i2c_begin()==0)
     return false;
     
-  bcm2835_i2c_setSlaveAddress(_i2c_addr) ;
+  bcm2835v2_i2c_setSlaveAddress(_i2c_addr) ;
     
   // Set clock to 400 KHz
   // does not seem to work, will check this later
-  // bcm2835_i2c_set_baudrate(400000);
+  // bcm2835v2_i2c_set_baudrate(400000);
 
   // Setup reset pin direction as output
-  bcm2835_gpio_fsel(rst, BCM2835_GPIO_FSEL_OUTP);
+  bcm2835v2_gpio_fsel(rst, BCM2835_GPIO_FSEL_OUTP);
   
   return ( true);
 }
@@ -410,14 +410,14 @@ void ArduiPi_OLED::close(void)
 
   // Release Raspberry SPI
   if ( isSPI() )
-    bcm2835_spi_end();
+    bcm2835v2_spi_end();
 
     // Release Raspberry I2C
   if ( isI2C() )
-    bcm2835_i2c_end();
+    bcm2835v2_i2c_end();
 
   // Release Raspberry I/O control
-  bcm2835_close();
+  bcm2835v2_close();
 }
 
   
@@ -432,20 +432,20 @@ void ArduiPi_OLED::begin( void )
   constructor(oled_width, oled_height);
 
   // Setup reset pin direction (used by both SPI and I2C)  
-  bcm2835_gpio_fsel(rst, BCM2835_GPIO_FSEL_OUTP);
-  bcm2835_gpio_write(rst, HIGH);
+  bcm2835v2_gpio_fsel(rst, BCM2835_GPIO_FSEL_OUTP);
+  bcm2835v2_gpio_write(rst, HIGH);
   
   // VDD (3.3V) goes high at start, lets just chill for a ms
   usleep(1000);
   
   // bring reset low
-  bcm2835_gpio_write(rst, LOW);
+  bcm2835v2_gpio_write(rst, LOW);
   
   // wait 10ms
   usleep(10000);
   
   // bring out of reset
-  bcm2835_gpio_write(rst, HIGH);
+  bcm2835v2_gpio_write(rst, HIGH);
   
   // depends on OLED type configuration
   if (oled_height == 32)
@@ -673,7 +673,7 @@ void ArduiPi_OLED::sendCommand(uint8_t c)
   if (isSPI())
   {
     // Setup D/C line to low to switch to command mode
-    bcm2835_gpio_write(dc, LOW);
+    bcm2835v2_gpio_write(dc, LOW);
 
     // Write Data on SPI
     fastSPIwrite(c);
@@ -702,7 +702,7 @@ void ArduiPi_OLED::sendCommand(uint8_t c0, uint8_t c1)
   if (isSPI())
   {
     // Setup D/C line to low to switch to command mode
-    bcm2835_gpio_write(dc, LOW);
+    bcm2835v2_gpio_write(dc, LOW);
 
     // Write Data
     fastSPIwrite(&buff[1], 2);
@@ -730,7 +730,7 @@ void ArduiPi_OLED::sendCommand(uint8_t c0, uint8_t c1, uint8_t c2)
   if (isSPI())
   {
     // Setup D/C line to low to switch to command mode
-    bcm2835_gpio_write(dc, LOW);
+    bcm2835v2_gpio_write(dc, LOW);
 
     // Write Data
     fastSPIwrite(&buff[1], 3);
@@ -850,7 +850,7 @@ void ArduiPi_OLED::sendData(uint8_t c)
   {
     // SPI
     // Setup D/C line to high to switch to data mode
-    bcm2835_gpio_write(dc, HIGH);
+    bcm2835v2_gpio_write(dc, HIGH);
 
     // write value
     fastSPIwrite(c);
@@ -893,7 +893,7 @@ void ArduiPi_OLED::display(void)
   if ( isSPI())
   {
     // Setup D/C line to high to switch to data mode
-    bcm2835_gpio_write(dc, HIGH);
+    bcm2835v2_gpio_write(dc, HIGH);
 
     // Send all data to OLED
     for ( i=0; i<oled_buff_size; i++) 
